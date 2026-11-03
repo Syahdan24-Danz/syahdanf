@@ -1,55 +1,59 @@
 # Deployment Guide
 
-This document records the deployment workflow used for the React portfolio.
-Replace placeholders with the actual values from the deployment.
+This document records the workflow used to deploy the React portfolio to an
+Ubuntu EC2 instance with Nginx. Replace `YOUR_KEY.pem` and `YOUR_PUBLIC_IP`
+with your own values.
+
+The deployment was performed on 2 November 2026 in an AWS lab. That instance
+has been shut down, so the public IP used at the time is no longer valid.
 
 ## 1. Prepare the Application — Laptop
 
-Open a terminal in the React application directory.
-
-For a repository with a valid package-lock.json:
+Open a terminal in the project directory. The repository uses pnpm
+(`pnpm-lock.yaml`):
 
 ```bash
-npm ci
-npm run build
+pnpm install --frozen-lockfile
+pnpm build
 ```
 
-The Vite build produces a dist directory containing index.html and assets.
-
-The local application build was confirmed ready before proceeding to AWS.
+The Vite build produces a `dist` directory containing `index.html` and an
+`assets` folder.
 
 ## 2. Create the EC2 Instance — AWS Console
 
-The deployment uses an Ubuntu EC2 instance.
+Configuration used:
 
-Record the actual configuration:
+| Setting | Value |
+|---|---|
+| Region | us-east-1 (N. Virginia) |
+| Instance name | syahdan-portfolio-ec2 |
+| Instance type | t3.micro |
+| Operating system | Ubuntu Linux |
+| Storage | 8 GiB EBS |
+| Key pair | Created in the console (the `.pem` file is kept private) |
 
-- Region: [isi]
-- Instance name: [isi]
-- Instance type: [isi]
-- Ubuntu version: [isi]
-- Storage: [isi]
-- Key pair name: [isi nama saja]
+The instance needs a public IP and a subnet with a route to an internet
+gateway for this connection method.
 
-The instance requires a public IP and a subnet with an internet route
-through an internet gateway for this connection method.
+Security group inbound rules:
 
-Configure security group inbound rules:
+| Type | Port | Source |
+|---|---|---|
+| SSH | TCP 22 | Administrator's public IP /32 |
+| HTTP | TCP 80 | 0.0.0.0/0 |
 
-- SSH, TCP 22: administrator's public IP /32.
-- HTTP, TCP 80: 0.0.0.0/0.
+Do not open SSH to `0.0.0.0/0`.
 
 ## 3. Connect Through SSH — Laptop
 
-For Windows PowerShell, from the directory containing the key:
+From Windows PowerShell, in the directory containing the key:
 
 ```powershell
 ssh -i ".\YOUR_KEY.pem" ubuntu@YOUR_PUBLIC_IP
 ```
 
-Replace YOUR_KEY.pem and YOUR_PUBLIC_IP with the actual values.
-
-Use ubuntu as the login user for the Ubuntu image used in this guide.
+`ubuntu` is the default login user for the Ubuntu image.
 
 ## 4. Install Nginx — EC2
 
@@ -57,18 +61,11 @@ Use ubuntu as the login user for the Ubuntu image used in this guide.
 sudo apt update
 sudo apt install -y nginx
 sudo systemctl enable --now nginx
-```
-
-Check the service:
-
-```bash
 sudo systemctl is-active nginx
 ```
 
-The expected output is active.
-
-At this stage, opening http://YOUR_PUBLIC_IP should display the default
-Nginx page.
+The last command should print `active`. At this point, opening
+`http://YOUR_PUBLIC_IP` shows the default Nginx page.
 
 ## 5. Prepare the Website Directory — EC2
 
@@ -79,16 +76,14 @@ sudo chown ubuntu:ubuntu /var/www/portfolio
 
 ## 6. Upload the Production Build — Laptop
 
-Open a new PowerShell terminal in the React project directory.
+In a new PowerShell window, from the project directory:
 
 ```powershell
 scp -i "C:\PATH\TO\YOUR_KEY.pem" -r .\dist\. ubuntu@YOUR_PUBLIC_IP:/var/www/portfolio/
 ```
 
-Upload the contents of dist so that index.html is directly inside
-/var/www/portfolio.
-
-Check the uploaded files in the EC2 SSH session:
+Upload the **contents** of `dist` so that `index.html` sits directly inside
+`/var/www/portfolio`. Verify in the SSH session:
 
 ```bash
 ls -la /var/www/portfolio
@@ -96,13 +91,9 @@ ls -la /var/www/portfolio
 
 ## 7. Configure Nginx — EC2
 
-Create the site configuration:
-
 ```bash
 sudo nano /etc/nginx/sites-available/portfolio
 ```
-
-Configuration used in the deployment walkthrough:
 
 ```nginx
 server {
@@ -122,44 +113,43 @@ server {
 }
 ```
 
-Save the file, then enable the site and remove the default site link:
+Enable the site and remove the default site link (first-time setup only):
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/portfolio
 sudo unlink /etc/nginx/sites-enabled/default
 ```
 
-These link changes are first-time setup steps. If already applied,
-inspect the enabled sites instead of repeating them:
+If these were already applied, inspect instead of repeating:
 
 ```bash
 ls -l /etc/nginx/sites-enabled
 ```
 
-Validate the configuration:
+Validate, and reload only if validation succeeds:
 
 ```bash
 sudo nginx -t
-```
-
-Reload only if validation succeeds:
-
-```bash
 sudo systemctl reload nginx
 ```
 
 ## 8. Open the Website — Browser
 
-Open:
+Open `http://YOUR_PUBLIC_IP`. If the default Nginx page still appears, do a
+hard refresh (Ctrl+Shift+R). The browser shows "Not secure" because the site
+is served over HTTP.
 
-http://54.91.110.158
+## 9. Redeploy After Changes
 
-Use a hard refresh if the browser still displays the default Nginx page.
+```bash
+pnpm build
+scp -i "C:\PATH\TO\YOUR_KEY.pem" -r .\dist\. ubuntu@YOUR_PUBLIC_IP:/var/www/portfolio/
+```
 
-## Deployment Outcome
+Nginx serves the files from disk, so no reload is needed for content changes.
 
-The author confirmed that the React website appeared successfully in
-the browser.
+## Outcome
 
-Detailed command outputs, screenshots, and remaining checks are pending
-documentation in 03-testing.md.
+The React website loaded successfully in the browser after step 8. Test
+results are in [03-testing.md](03-testing.md), and common problems are in
+[06-troubleshooting.md](06-troubleshooting.md).

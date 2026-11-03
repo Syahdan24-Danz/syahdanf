@@ -6,7 +6,8 @@ Estimate the monthly infrastructure cost of hosting a React portfolio
 website on Amazon EC2.
 
 This estimate uses public AWS On-Demand prices and a 730-hour monthly
-scenario. It is a simulation, not the actual AWS lab bill.
+scenario. It is a simulation, not the actual AWS lab bill. The real
+experiment ran in an AWS lab for a short time and was shut down.
 
 ## Deployment Configuration
 
@@ -17,7 +18,7 @@ scenario. It is a simulation, not the actual AWS lab bill.
 | Operating system | Ubuntu Linux |
 | Instance count | 1 |
 | EBS volume size | 8 GiB |
-| EBS volume type | To be verified: gp2 or gp3 |
+| EBS volume type | Not recorded: both gp2 and gp3 are estimated below |
 | Public IPv4 | 1 address |
 | Pricing model | On-Demand — simulation assumption |
 | Estimated runtime | 730 hours per month |
@@ -50,7 +51,7 @@ Unrounded calculation: USD 7.592.
 
 ### 2. EBS Storage — 8 GiB
 
-The actual volume type must be checked in the EC2 console.
+The volume type was not recorded, so both options are shown.
 
 | Scenario | Calculation | Estimated Cost |
 |---|---|---:|

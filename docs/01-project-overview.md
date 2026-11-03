@@ -2,11 +2,12 @@
 
 ## Background
 
-An existing React portfolio website was deployed to AWS to gain practical
-experience with cloud infrastructure and Linux server administration.
+I built a React portfolio website and deployed it to AWS to gain practical
+experience with cloud infrastructure and Linux server administration. The
+deployment was done in an AWS lab environment on 2 November 2026.
 
-The project focuses on the deployment process rather than developing
-a new application.
+The focus is the deployment process: networking, access control, a web
+server, monitoring, and cost. The application is a static single-page site.
 
 ## Objectives
 
@@ -14,6 +15,7 @@ a new application.
 - Practice connecting to a Linux server using SSH.
 - Configure network access through a security group.
 - Use Nginx to serve a production frontend build.
+- Monitor the instance and set up an email alert.
 - Document deployment steps and actual results.
 
 ## Scope
@@ -25,31 +27,33 @@ a new application.
 - SSH connection.
 - Nginx installation and configuration.
 - File transfer using SCP.
-- Initial browser access to the deployed website.
+- Browser access to the deployed website.
+- CloudWatch metrics, a CPU alarm design, and an SNS email topic.
+- A monthly cost estimate.
 
 ### Not Implemented
 
 - Backend application and database.
 - Custom domain and HTTPS.
 - Load balancing and Auto Scaling.
-- Automated deployment.
-- CloudWatch alarms and cost analysis.
+- Automated deployment (CI/CD).
+- An end-to-end CloudWatch alarm test.
 
 ## Environment
 
-Fill in these values from the actual deployment.
-
-| Configuration | Actual Value |
+| Configuration | Value |
 |---|---|
-| AWS account type | [isi: AWS Academy atau pribadi] |
-| AWS Region | [isi region] |
-| Instance name | [isi nama instance] |
-| Instance type | [isi tipe instance] |
-| Ubuntu version | [isi versi Ubuntu] |
-| EBS volume type and size | [isi jenis dan kapasitas disk] |
-| Application repository | [isi URL repository React] |
-| Source commit | [isi commit yang dibuild, jika diketahui] |
-| Deployment date | [isi tanggal deployment] |
+| AWS account type | AWS lab environment |
+| AWS Region | US East (N. Virginia) — us-east-1 |
+| Instance name | syahdan-portfolio-ec2 |
+| Instance type | t3.micro |
+| Ubuntu version | Not recorded |
+| EBS volume | 8 GiB, attached to /dev/sda1 (volume type not recorded) |
+| Web server | Nginx 1.28.3 |
+| Application repository | https://github.com/Syahdan24-Danz/syahdanf |
+| Source commit | Not recorded (the repository was published to GitHub after deployment) |
+| Deployment date | 2 November 2026 |
+| Current state | Lab instance shut down; the site is no longer reachable |
 
 ## Network Access Design
 
@@ -58,22 +62,24 @@ Fill in these values from the actual deployment.
 | SSH | 22 | Administrator's public IP /32 | Server administration and SCP |
 | HTTP | 80 | 0.0.0.0/0 | Public website access |
 
-Verify the actual security group settings before recording them as tested.
+The actual security group rules were not captured in the evidence, so this
+table records the intended design rather than a verified configuration.
 
 ## Application Delivery
 
-The production build was generated on the laptop. Its output was uploaded
-to /var/www/portfolio on the EC2 instance.
+The production build was generated on the laptop. Its output was uploaded to
+`/var/www/portfolio` on the EC2 instance, and Nginx uses this directory as its
+document root.
 
-Nginx was configured to use this directory as its document root.
+The single-page-app fallback sends frontend routes to `index.html`. Requests
+for missing files under `/assets/` return HTTP 404 instead of falling back, so
+a broken asset path is visible rather than hidden behind the home page.
 
-The SPA fallback directs frontend routes to index.html. Requests for
-missing files under /assets/ return HTTP 404.
+## Outcome
 
-## Current Outcome
+The website loaded successfully in the browser through the instance's public
+IP address on 2 November 2026. The Nginx service was active, its configuration
+test passed, and a local request returned HTTP 200.
 
-The website is accessible through the EC2 instance's public IP address.
-This initial browser check has been confirmed by the author.
-
-Detailed infrastructure evidence and the remaining test results are
-recorded separately in the testing document.
+Detailed results and the checks that were not completed are in
+[03-testing.md](03-testing.md).

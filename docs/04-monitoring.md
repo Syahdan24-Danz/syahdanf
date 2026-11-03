@@ -122,13 +122,16 @@ the notification. That end-to-end test remains pending.
 | M01 | View EC2 metrics | CPU and network graphs visible | PASS |
 | M02 | Review initial CPU usage | Approximate chart observation recorded | PASS |
 | M03 | Send a manual SNS test message | Email received | PASS |
-| M04 | Verify exact alarm settings and SNS action | Screenshot not yet recorded | PENDING |
-| M05 | Trigger CPU alarm and receive alarm email | Result not reported | PENDING |
-| M06 | Confirm alarm returns to OK after load ends | Not reported | PENDING |
+| M04 | Verify exact alarm settings and SNS action | Screenshot not recorded | NOT COMPLETED |
+| M05 | Trigger CPU alarm and receive alarm email | Not reported | NOT COMPLETED |
+| M06 | Confirm alarm returns to OK after load ends | Not reported | NOT COMPLETED |
+
+The lab instance has been shut down, so M04 to M06 would need a new
+deployment.
 
 ## Evidence
 
-Add the following redacted screenshots to the evidence directory:
+Screenshots still to be added to the `screenshots/` directory, redacted:
 
 - EC2 Monitoring tab showing CPU and network metrics.
 - CloudWatch CPUUtilization graph with time range and statistic.
@@ -161,8 +164,11 @@ to collect guest memory metrics in CloudWatch.
 
 ## Next Steps
 
+On a future deployment:
+
 1. Capture the exact CPU datapoints and confirm the monitoring period.
 2. Verify the alarm configuration and SNS action in CloudWatch.
-3. Perform and document an end-to-end alarm test if permitted by the lab.
+3. Perform and document an end-to-end alarm test.
 4. Observe utilization over a longer, representative workload.
-5. Include monitoring costs in the cost analysis when available.
+5. Install the CloudWatch Agent to collect memory metrics.
+6. Include monitoring costs in the cost analysis.
