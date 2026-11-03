@@ -69,43 +69,6 @@ const Hero = () => {
           <span className="animate-cursor-blink">▊</span>
         </div>
       </motion.div>
-
-      {/* Status badges */}
-      <motion.div
-        className="mt-6 flex flex-wrap justify-center gap-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.1 }}
-      >
-        {[
-          {
-            label: "GPA 3.72",
-            color: "from-green-500/20 to-green-600/20",
-            border: "border-green-500/20",
-          },
-          {
-            label: "UNPAD",
-            color: "from-blue-500/20 to-blue-600/20",
-            border: "border-blue-500/20",
-          },
-          {
-            label: "Digital Business",
-            color: "from-purple-500/20 to-purple-600/20",
-            border: "border-purple-500/20",
-          },
-        ].map((badge, i) => (
-          <motion.span
-            key={badge.label}
-            className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${badge.color} border ${badge.border} text-white/70`}
-            whileHover={{ scale: 1.05, y: -2 }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.2 + i * 0.1 }}
-          >
-            {badge.label}
-          </motion.span>
-        ))}
-      </motion.div>
     </div>
   );
 };
