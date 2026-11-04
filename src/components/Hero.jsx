@@ -61,8 +61,10 @@ const Hero = () => {
           <span>cat about.txt</span>
         </div>
         <p className="text-white/70 leading-relaxed text-[13px]">
-          Fresh graduate with a Bachelor's degree in           <span className="text-[#0a84ff]">Digital Business</span>{" "}from
-          <span className="text-[#bf5af2]">{" "}Universitas Padjadjaran</span>, focused on applying technology to support business needs and data-driven decision-making. He has experience in digital transformation, data analysis, and website development and deployment. At PT Hidup Gaya Loka Cipta, he was involved in business process mapping to identify opportunities for AI adoption. Holding an AWS Certified Cloud Practitioner certification and equipped with structured problem-solving skills, he aims to contribute to developing cloud solutions that fit business needs and support operational efficiency.
+        
+Fresh graduate with a Bachelor's degree in <span className="text-[#0a84ff]">Digital Business</span>{" "}from
+<span className="text-[#bf5af2]">{" "}Universitas Padjadjaran</span>, specializing in applying technology to support business needs and data-driven decision-making. Aspiring to build a career at the intersection of business and IT, with a strong interest in cloud infrastructure and technology-driven business solutions. Experienced in IT and digital transformation initiatives at PT Hidup Gaya Loka Cipta, including data analysis, website development, and business process mapping to identify opportunities for AI adoption. Holding an AWS Certified Cloud Practitioner (CLF-C02) certification and equipped with strong analytical and problem-solving skills, aiming to contribute to technology solutions that align with business needs and improve operational efficiency.
+
         </p>
         <div className="mt-3 flex items-center gap-2 text-white/30">
           <span className="text-[#28c840]">~</span>
