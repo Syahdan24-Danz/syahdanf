@@ -1,85 +1,95 @@
-# Architecture
+# Arsitektur
 
-## Summary
+Website portofolio adalah aplikasi statis (React + Vite). File dibangun di instance, disalin ke direktori web, dan dilayani oleh Nginx pada satu instance EC2. Tidak ada backend maupun database.
 
-The portfolio is a static single-page application. It is built once on a
-laptop, copied to a single EC2 instance, and served by Nginx. CloudWatch and
-SNS provide basic monitoring and an email alert.
+Dokumen ini merangkum diagram dan keputusan desain. Nilai konfigurasi aktual dan buktinya ada di [docs/02-cloud-architecture.md](../docs/02-cloud-architecture.md).
 
-## Deployment Architecture
+## Diagram Jaringan dan Akses
 
 ```mermaid
 flowchart TD
-    V["Visitor browser"] -->|HTTP port 80| SG["Security group"]
-    A["Administrator laptop"] -->|SSH port 22, my IP only| SG
-    SG --> E["EC2 t3.micro, Ubuntu"]
-    E --> N["Nginx"]
-    N --> W["/var/www/portfolio: React build"]
-    A -->|SCP: upload dist| W
+    V["Pengunjung (browser)"] -->|"HTTP port 80"| IGW["Internet Gateway"]
+    A["Administrator"] -->|"EC2 Instance Connect (SSH port 22)"| IGW
+    IGW --> RT["Route table: 0.0.0.0/0 ke Internet Gateway"]
+    RT --> SG["Security Group: HTTP 80 dari 0.0.0.0/0, SSH 22 terbatas"]
+
+    subgraph VPC["VPC 172.31.0.0/16, us-east-1"]
+        subgraph SUB["Public subnet, us-east-1c"]
+            SG --> EC2["EC2 t3.micro, Amazon Linux 2023, Nginx"]
+        end
+    end
+
+    EC2 --> EBS["EBS gp3 8 GiB"]
+    EC2 --> WEB["/var/www/syahdan-portfolio: hasil build"]
+    EC2 -->|"Metrik"| CW["CloudWatch"]
 ```
 
-| Component | Role |
-|---|---|
-| Visitor browser | Downloads the static files and runs the React app |
-| Security group | Allows HTTP from anywhere and SSH only from the administrator's IP |
-| EC2 t3.micro (us-east-1) | Hosts Nginx and the website files |
-| Nginx | Serves static files and falls back to `index.html` |
-| `/var/www/portfolio` | Web root containing the Vite build output |
-
-## Monitoring Architecture
+## Diagram Deployment
 
 ```mermaid
 flowchart LR
-    E["EC2 instance"] -->|Metrics| C["CloudWatch"]
-    C -->|Alarm: CPU above 70%, 2 of 2 periods| S["SNS topic"]
-    S -->|Notification| M["Email subscription"]
+    GH["GitHub: Syahdan24-Danz/syahdanf"] -->|git clone| SRC["~/syahdanf di EC2"]
+    SRC -->|"npm ci, npm run build"| DIST["dist/"]
+    DIST -->|"sudo cp -a dist/."| WEB["/var/www/syahdan-portfolio"]
+    CONF["/etc/nginx/conf.d/syahdan-portfolio.conf"] --> NGX["Nginx"]
+    WEB --> NGX
 ```
 
-The alarm design and the manual SNS test are described in
-[../docs/04-monitoring.md](../docs/04-monitoring.md). The end-to-end alarm
-trigger was not verified.
+Aplikasi dibangun langsung di instance, bukan di laptop lalu diunggah. Konsekuensinya, Git dan Node.js terpasang di server produksi, dan proses build memakai CPU dan memori instance (lihat lonjakan CPU pada [monitoring](../docs/05-monitoring-utilization.md)).
 
-## Request Flow
+## Alur Request
 
-1. The visitor opens `http://<public-ip>`.
-2. The request reaches the instance through the security group on port 80.
-3. Nginx returns `index.html` and the files under `/assets/`.
-4. The browser runs the React application. Section changes happen in the
-   browser, with no further server requests for pages.
+1. Pengunjung membuka `http://<public-ip>`.
+2. Permintaan masuk melalui Internet Gateway dan diperiksa Security Group pada port 80.
+3. Nginx mengembalikan `index.html` dan file di `/assets/` (cache 7 hari).
+4. Browser menjalankan aplikasi React. Perpindahan menu terjadi di browser tanpa permintaan halaman baru ke server.
 
-## Design Decisions
+## Komponen
 
-| Decision | Reason |
+| Komponen | Nilai | Fungsi |
+|---|---|---|
+| Region / AZ | us-east-1 / us-east-1c | Lokasi resource |
+| EC2 | `t3.micro`, 2 vCPU, 1 GiB RAM | Menjalankan Nginx dan menyimpan website |
+| OS | Amazon Linux 2023 | Sistem operasi server |
+| EBS | gp3, 8 GiB | Penyimpanan OS dan file |
+| VPC / Subnet | `vpc-021676310f284f4c8` / `subnet-0e1180bdf8df96d68` | Jaringan virtual |
+| Internet Gateway | `igw-0d8ee8bdf9635a06e` | Koneksi VPC ke internet |
+| Route table | `rtb-0098c5079eb3cdb7c` (main) | `0.0.0.0/0` ke Internet Gateway |
+| Security Group | `syahdan-portfolio-sg` | Firewall instance |
+| Nginx | 1.30.6 | Melayani file statis |
+| CloudWatch | Metrik dasar EC2 | Memantau CPU dan jaringan |
+
+## Keputusan Desain
+
+| Keputusan | Alasan |
 |---|---|
-| Static build served by Nginx | The site has no backend or database, so a plain web server is enough |
-| Single EC2 instance | Simple and cheap for a learning deployment |
-| SSH restricted to one IP /32 | Reduces exposure of the administrative port |
-| `try_files $uri $uri/ /index.html` | Standard single-page-app fallback |
-| `/assets/` returns 404 when missing | A broken asset path fails visibly |
-| Manual SCP upload | Keeps each deployment step visible for learning |
+| Nginx melayani file statis | Aplikasi tidak memiliki backend, sehingga web server biasa sudah cukup |
+| Satu instance `t3.micro` | Sederhana dan murah untuk lab; CPU tetap rendah pada pengamatan |
+| `try_files $uri $uri/ /index.html` | Fallback standar untuk single page application |
+| Cache 7 hari pada `/assets/` | Nama file hasil build memiliki hash, sehingga aman di-cache |
+| EC2 Instance Connect | Tidak perlu mengelola file private key di laptop |
+| HTTP port 80 terbuka untuk publik | Pengunjung harus dapat mengakses website |
+| SSH dibatasi | Mengurangi risiko akses tidak sah |
 
-## Trade-offs and Limitations
+## Batasan dan Trade-off
 
-- **No HTTPS or custom domain.** Traffic is unencrypted and browsers show
-  "Not secure".
-- **Single point of failure.** One instance in one Availability Zone, with no
-  load balancer or Auto Scaling.
-- **Manual deployment.** Uploads are done by hand and are error-prone.
-- **Cost for a static site.** An always-on instance and public IPv4 address
-  cost more than static hosting; see
-  [../docs/05-cost-analysis.md](../docs/05-cost-analysis.md).
-- **Monitoring is basic.** Standard EC2 metrics have no memory data and say
-  nothing about website availability or response time.
+- **Tidak ada HTTPS dan domain kustom.** Lalu lintas tidak terenkripsi.
+- **Single point of failure.** Satu instance, satu AZ, tanpa load balancer atau Auto Scaling.
+- **Deployment manual.** Setiap pembaruan memerlukan login, `git pull`, build, dan salin.
+- **Biaya untuk situs statis.** Instance yang menyala terus dan IPv4 publik lebih mahal daripada hosting statis ([analisis biaya](../docs/06-cost-analysis.md)).
+- **Public IPv4 otomatis berubah** ketika instance dihentikan lalu dijalankan.
+- **Monitoring dasar.** Metrik EC2 standar tidak menyertakan memori dan tidak menggambarkan ketersediaan website.
 
-## Possible Improvements
+## Peningkatan yang Dapat Dilakukan
 
-These were not implemented.
+Belum diimplementasikan.
 
-| Improvement | Benefit |
+| Peningkatan | Manfaat |
 |---|---|
-| Host the build on S3 with CloudFront | No server to manage, HTTPS, lower cost for static content |
-| HTTPS with a custom domain (ACM or Let's Encrypt) | Encrypted traffic and no "Not secure" warning |
-| Elastic IP | Stable address across stop and start |
-| CI/CD with GitHub Actions | Automatic build and deploy on each push |
-| CloudWatch Agent | Memory and disk metrics |
-| Route 53 health check | Availability monitoring |
+| S3 + CloudFront untuk hosting statis | Tanpa server, HTTPS, biaya lebih rendah untuk konten statis |
+| HTTPS dengan domain kustom | Lalu lintas terenkripsi, tanpa peringatan "Tidak aman" |
+| Elastic IP | Alamat tetap |
+| CI/CD (misalnya GitHub Actions) | Build dan deploy otomatis |
+| Menghapus server block bawaan Nginx | Menghilangkan peringatan `conflicting server name` |
+| CloudWatch Agent | Metrik memori dan disk di CloudWatch |
+| CloudWatch Alarm + SNS | Notifikasi otomatis saat CPU tinggi |

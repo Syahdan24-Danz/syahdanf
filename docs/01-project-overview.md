@@ -1,85 +1,78 @@
-# Project Overview
+# 01 — Ringkasan Proyek
 
-## Background
+## Identitas Proyek
 
-I built a React portfolio website and deployed it to AWS to gain practical
-experience with cloud infrastructure and Linux server administration. The
-deployment was done in an AWS lab environment on 2 November 2026.
-
-The focus is the deployment process: networking, access control, a web
-server, monitoring, and cost. The application is a static single-page site.
-
-## Objectives
-
-- Understand how an application is hosted on an EC2 instance.
-- Practice connecting to a Linux server using SSH.
-- Configure network access through a security group.
-- Use Nginx to serve a production frontend build.
-- Monitor the instance and set up an email alert.
-- Document deployment steps and actual results.
-
-## Scope
-
-### Included
-
-- Local production build of the React application.
-- Ubuntu EC2 instance.
-- SSH connection.
-- Nginx installation and configuration.
-- File transfer using SCP.
-- Browser access to the deployed website.
-- CloudWatch metrics, a CPU alarm design, and an SNS email topic.
-- A monthly cost estimate.
-
-### Not Implemented
-
-- Backend application and database.
-- Custom domain and HTTPS.
-- Load balancing and Auto Scaling.
-- Automated deployment (CI/CD).
-- An end-to-end CloudWatch alarm test.
-
-## Environment
-
-| Configuration | Value |
+| Atribut | Keterangan |
 |---|---|
-| AWS account type | AWS lab environment |
-| AWS Region | US East (N. Virginia) — us-east-1 |
-| Instance name | syahdan-portfolio-ec2 |
-| Instance type | t3.micro |
-| Ubuntu version | Not recorded |
-| EBS volume | 8 GiB, attached to /dev/sda1 (volume type not recorded) |
-| Web server | Nginx 1.28.3 |
-| Application repository | https://github.com/Syahdan24-Danz/syahdanf |
-| Source commit | Not recorded (the repository was published to GitHub after deployment) |
-| Deployment date | 2 November 2026 |
-| Current state | Lab instance shut down; the site is no longer reachable |
+| Nama proyek | Deployment Website Portofolio Pribadi di AWS EC2 |
+| Jenis proyek | Skill Builder Lab |
+| Peran | Pengembang aplikasi dan pelaksana deployment cloud |
+| Aplikasi | Website portofolio pribadi |
+| Frontend | React dan Vite |
+| Platform cloud | Amazon Web Services (AWS) |
+| Layanan yang digunakan | Amazon EC2, Amazon EBS, Amazon VPC, Security Group, Amazon CloudWatch |
+| Web server | Nginx |
+| Repository | https://github.com/Syahdan24-Danz/syahdanf |
+| Status | **Selesai:** deployment berhasil, pengujian 8/8 PASS, monitoring dan analisis biaya disusun |
 
-## Network Access Design
+## Latar Belakang
 
-| Traffic | Port | Intended Source | Purpose |
-|---|---|---|---|
-| SSH | 22 | Administrator's public IP /32 | Server administration and SCP |
-| HTTP | 80 | 0.0.0.0/0 | Public website access |
+Website portofolio pribadi dikembangkan menggunakan React dan Vite. Proyek ini mempraktikkan proses deployment aplikasi frontend ke infrastruktur cloud: persiapan instance, konfigurasi jaringan dan web server, pengujian, pemantauan utilisasi, hingga estimasi biaya.
 
-The actual security group rules were not captured in the evidence, so this
-table records the intended design rather than a verified configuration.
+## Tujuan
 
-## Application Delivery
+1. Menjalankan website portofolio pada instance Amazon EC2.
+2. Mengonfigurasi akses jaringan melalui Security Group dan web server Nginx.
+3. Memvalidasi akses publik dan fungsi utama website dengan skenario pengujian yang terdokumentasi.
+4. Mengamati metrik utilisasi melalui CloudWatch dan sistem operasi.
+5. Mengestimasi biaya AWS serta membandingkannya dengan Tencent Cloud untuk workload yang setara.
+6. Menyusun bukti implementasi yang dapat diperiksa melalui dokumentasi dan screenshot.
 
-The production build was generated on the laptop. Its output was uploaded to
-`/var/www/portfolio` on the EC2 instance, and Nginx uses this directory as its
-document root.
+## Ruang Lingkup
 
-The single-page-app fallback sends frontend routes to `index.html`. Requests
-for missing files under `/assets/` return HTTP 404 instead of falling back, so
-a broken asset path is visible rather than hidden behind the home page.
+**Termasuk:** build aplikasi frontend, deployment statis, konfigurasi EC2/EBS/jaringan, pengujian fungsional sederhana, monitoring, estimasi biaya, dokumentasi, dan troubleshooting.
 
-## Outcome
+**Tidak termasuk:** backend, database, CI/CD otomatis, domain kustom, HTTPS, load balancer, dan Auto Scaling. Hal-hal ini dicatat sebagai pengembangan berikutnya di [architecture/architecture.md](../architecture/architecture.md).
 
-The website loaded successfully in the browser through the instance's public
-IP address on 2 November 2026. The Nginx service was active, its configuration
-test passed, and a local request returned HTTP 200.
+## Arsitektur
 
-Detailed results and the checks that were not completed are in
-[03-testing.md](03-testing.md).
+Pengunjung → Internet → Internet Gateway → Security Group (HTTP 80) → EC2 (Nginx) → file statis hasil build React/Vite.
+
+Penyimpanan instance menggunakan EBS gp3. Metrik EC2 diamati melalui CloudWatch. Diagram dan nilai aktual ada di [02 — Cloud Architecture](02-cloud-architecture.md).
+
+## Progres dan Bukti
+
+| Aktivitas | Status | Bukti |
+|---|---|---|
+| Pengembangan website React + Vite | Selesai | [Repository](https://github.com/Syahdan24-Danz/syahdanf) |
+| Build lokal (`npm run build`) | Berhasil | [Screenshot](../screenshots/project-overview/01-build-success.png) |
+| EC2 dibuat dan berjalan | Selesai | [Screenshot](../screenshots/architecture/01-ec2-instance.png) |
+| Nginx terpasang | Selesai | [Screenshot](../screenshots/deployment/02-nginx-running.png) |
+| Website dapat diakses publik | Selesai | [Screenshot](../screenshots/deployment/06-portfolio-live.png) |
+| Pengujian fungsional | 8/8 PASS | [04 — Testing](04-testing-validation.md) |
+| Monitoring | Selesai (pengamatan awal) | [05 — Monitoring](05-monitoring-utilization.md) |
+| Analisis biaya | Selesai (estimasi) | [06 — Cost](06-cost-analysis.md) |
+| Perbandingan AWS dan Tencent Cloud | Selesai (harga publik) | [07 — Comparison](07-aws-vs-tencent-cloud.md) |
+
+## Bukti Visual
+
+![Hasil build Vite di laptop](../screenshots/project-overview/01-build-success.png)
+
+![Portfolio berjalan di EC2](../screenshots/deployment/06-portfolio-live.png)
+
+## Kontribusi Pribadi
+
+Saya mengembangkan website portofolio menggunakan React dan Vite, menyiapkan instance EC2 dan konfigurasi jaringannya, memasang dan mengonfigurasi Nginx, melakukan deployment aplikasi, menguji hasilnya, memantau utilisasi, dan menyusun analisis biaya. Seluruh hasil diberi konteks **AWS Academy / Skill Builder Lab**, bukan pengalaman operasional produksi.
+
+## Kriteria Keberhasilan
+
+| Kriteria | Hasil |
+|---|---|
+| Website dapat diakses melalui alamat publik instance | Tercapai |
+| Fungsi utama bekerja | Tercapai (8/8 test case) |
+| Konfigurasi dan hasil pengujian terdokumentasi | Tercapai |
+| Analisis biaya dengan asumsi eksplisit | Tercapai |
+
+## Batasan
+
+AWS Academy / Skill Builder Lab membatasi izin IAM, pilihan resource, durasi sesi, dan akses layanan. Contohnya, AWS Compute Optimizer tidak dapat digunakan (lihat [03 — Deployment Guide](03-deployment-guide.md#issue-2--aws-compute-optimizer-accessdenied)). Biaya yang dihitung adalah **estimasi**, bukan tagihan aktual.
